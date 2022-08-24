@@ -4,10 +4,10 @@
 ---
 
 # 도로시설물 이상 탐지 여부
-- 활용 OpenSource : Yolo V5 (https://github.com/ultralytics/yolov5)
+- 활용 Repository : Yolo V5 (https://github.com/ultralytics/yolov5)
 - 활용 Pre-Trained Model : Yolo V5s
 - 데이터 : 비공개 데이터(도로 시설물 이미지 데이터 및 JSON파일)
-- 해커톤 제출 양식에 따라 detect.py 코드 수정 
+- 해커톤 대회 제출 양식에 따라 detect.py 코드 수정 
 
 ## 데이터 전처리 (Data_preprocessing.py)
 - 이미지 데이터 사이즈 (416X416) 으로 수정
