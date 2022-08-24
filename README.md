@@ -1,3 +1,8 @@
+
+### change log (2022.08.24)
+- fix typo in the readme
+---
+
 # 도로시설물 이상 탐지 여부
 - 활용 OpenSource : Yolo V5 (https://github.com/ultralytics/yolov5)
 - 활용 Pre-Trained Model : Yolo V5s
