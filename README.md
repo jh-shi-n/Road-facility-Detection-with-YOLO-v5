@@ -1,6 +1,9 @@
-
 ### change log (2022.08.24)
 - fix typo in the readme
+
+### change log (2023.12.11)
+- code modularize
+- add submodule
 ---
 
 # 도로시설물 이상 탐지 여부
@@ -17,4 +20,4 @@
 
 ## 도로 시설물 이미지 Detect 결과 도출 (Detect.py)
 - 검출 결과에 대한 summary.txt 파일 생성 (기존 코드 내 일부 수정)
-- 각 파일에 대한 검출 결과에 대한 txt 파일 생성 (기본 옵션)
+- 각 파일에 대한 검출 결과에 대한 txt 파일 생성
