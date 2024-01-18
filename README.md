@@ -1,9 +1,13 @@
-### change log (2022.08.24)
-- fix typo in the readme
+> change log (2022.08.24)
+> - fix typo in the readme
 
-### change log (2023.12.11)
-- code modularize
-- add submodule
+> change log (2023.12.11)
+> - code modularize
+> - add submodule
+
+> change log (2024.01.18)
+> - code modify(detect.py)
+> - add config.json file
 ---
 
 # 도로시설물 이상 탐지 여부
