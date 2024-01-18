@@ -9,10 +9,13 @@ import argparse
 import os
 import sys
 import cv2
+import json
 import torch
 import torch.backends.cudnn as cudnn
 from pathlib import Path
 
+# Setting Root
+CONFIG = "./src/config.json"
 ROOT = "./src/yolov5"  # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
@@ -25,7 +28,6 @@ from utils.general import (LOGGER, check_file, check_img_size, check_imshow, che
                            increment_path, non_max_suppression, print_args, scale_coords, strip_optimizer, xyxy2xywh)
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, time_sync
-
 
 @torch.no_grad()
 def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
@@ -59,7 +61,7 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
 
     # 저장 Dictionary _ 탐지 결과 및 객체 이름 생성
-    save_dir = Path(SAVE_ROOT) / name
+    save_dir = os.path.join(Path(SAVE_ROOT), name)
     if os.path.isdir(save_dir) is False:  # 폴더 생성 시
       save_dir.mkdir(parents=True, exist_ok=True)
 
@@ -68,17 +70,21 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
     model = DetectMultiBackend(weights, device=device, dnn=dnn)
     stride, pt, jit, onnx, engine = model.stride,  model.pt, model.jit, model.onnx, model.engine
     imgsz = check_img_size(imgsz, s=stride)  # check image size
-    names = ['자동차진입_억제용_말뚝_스테인리스', '자동차진입_억제용_말뚝_스테인리스_불량', '자동차진입_억제용_말뚝_탄성고무', '자동차진입_억제용_말뚝_탄성고무_불량', '시선유도봉_2줄', '시선유도봉_2줄_불량', '시선유도봉_3줄', '시선유도봉_3줄_불량', '보행자용_방호울타리', '보행자용_방호울타리_불량', '보행자용_방호울타리_불량부분', '교량용_방호울타리', '교량용_방호울타리_불량', '교량용_방호울타리_불량부분', '턱낮추기', '턱낮추기_불량', '턱낮추기_불량부분', '경사로', '경사로_불량', '점자블럭', '점자블럭_불량', '점자블럭_불량부분', '도로안내표지_지주', '도로안내표지_지주_불량', '시멘트_콘크리트', '시멘트_콘크리트_불량', '시멘트_콘크리트_불량부분', '보도블록', '보도블록_불량', '보도블록_불량부분', '자전거도로', '자전거도로_불량', '자전거도로_불량부분', '연석', '연석_불량', '연석_불량부분', '무단횡단_방지_울타리', '무단횡단_방지_울타리_불량', '무단횡단_방지_울타리_불량부분', '맨홀', '맨홀_불량', '현장신호제어기', '현장신호제어기_불량', '시각장애인용_음향신호기', '시각장애인용_음향신호기_불량', '과속방지턱', '과속방지턱_불량', '과속방지턱_불량부분', '횡단보도', '횡단보도_불량', '횡단보도_불량부분', '고원식횡단보도', '고원식횡단보도_불량', '고원식횡단보도_불량부분', '통합표지판', '통합표지판_불량' , '정주식_부착식_표지', '정주식_부착식_표지_불량', '가로등', '가로등_불량', '전봇대_빗금표시', '전봇대_빗금표시_불량', '자동차진입_억제용_말뚝_대리석', '자동차진입_억제용_말뚝_대리석_불량', '자동차진입_억제용_말뚝_U자형', '자동차진입_억제용_말뚝_U자형_불량', '소화전', '소화전_불량', '주차멈춤턱_블럭형', '주차멈춤턱_블럭형_불량', '미끄럼방지계단', '미끄럼방지계단_불량']
-    class_normalcode = [0, 2, 4 ,6 ,8 , 11, 14, 17, 19, 22, 24, 27, 30, 33, 36, 39, 41, 43, 45, 48, 51, 54, 56, 58, 60, 62, 64]
 
     # Dataloader
     dataset = LoadImages(source, img_size=imgsz, stride=stride, auto=pt)
     bs = 1  # batch_size
 
     # 저장 Directory 준비 _ Summary 관련
-    save_summary_dir = Path(SAVE_ROOT) / "test_summary"
+    save_summary_dir = os.path.join(Path(SAVE_ROOT), "test_summary")
     if os.path.isdir(save_summary_dir) is False:  # 폴더 생성 시
       save_summary_dir.mkdir(parents=True, exist_ok=True)
+
+    # Setting Class
+    with open(CONFIG, "r") as f1:
+        facility_file = json.load(f1)
+    FACILITY_NAME = facility_file['facility_file']
+    FACILITY_NORMAL_CODE = facility_file['normal_class_code']
 
     # 탐지 시작
     model.warmup(imgsz=(1, 3, *imgsz), half=half)  # warmup
@@ -114,7 +120,6 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
             txt_path = str(save_dir  / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
-            annotator = Annotator(im0, line_width=line_thickness, example=str(names))
             if len(det):
                 # Bbox 사이즈를 현재 이미지 사이즈에 맞게 조정
                 det[:, :4] = scale_coords(im.shape[2:], det[:, :4], im0.shape).round()
@@ -122,42 +127,47 @@ def run(weights=ROOT / 'yolov5s.pt',  # model.pt path(s)
                 # 결과 출력 _ 이미지명, 객체명, 갯수 Summary
                 for c in det[:, -1].unique():
                     n = (det[:, -1] == c).sum()  # detections per class
-                    s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
+                    s += f"{n} {FACILITY_NAME[str(c)]}{'s' * (n > 1)}, "  # add to string
                    
-
                 # 결과 출력 _ 이미지 별 객체 및 bbox 
                 for *xyxy, conf, cls in reversed(det):
-                    state_zero = ["0 "]
-                    state_one = ["1 "]
+                    # 포맷 상 숫자 뒤 
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
+                        state_zero, state_one = [], []
 
                         # Yolo BBox result 추출
-                        class_num = str(int(line[0]))
-                        xmin_value = int(xyxy[0])
-                        ymin_value = int(xyxy[1])
-                        xmax_value = int(xyxy[2])
-                        ymax_value = int(xyxy[3])
+                        class_num = int(line[0])
+                        xmin_value, ymin_value, xmax_value, ymax_value = int(xyxy[0]), int(xyxy[1]), int(xyxy[2]),int(xyxy[3])
 
                         #파일 판단 ~ 정상인 경우 0 , 비정상인 경우 1
-                        if int(class_num) in class_normalcode:
-                            state_zero.append("{} : [{}, {}, {}, {}]".format(class_num.zfill(2),xmin_value ,ymin_value ,xmax_value , ymax_value)+"\n")
+                        state_result = f"{str(class_num).zfill(2)} : [{xmin_value}, {ymin_value}, {xmax_value}, {ymax_value}] \n"
+                        if class_num in FACILITY_NORMAL_CODE:
+                            state_zero.append(state_result)
                         else:
-                            state_one.append("{} : [{}, {}, {}, {}]".format(class_num.zfill(2),xmin_value ,ymin_value ,xmax_value , ymax_value)+"\n")
+                            state_one.append(state_result)
 
 
-                        with open(txt_path + '.txt', 'a') as f:
+                        with open(txt_path + '.txt', 'a') as summary_file:
+                            # 정상인 케이스부터 우선적으로 자료 저장, 없을 경우 숫자 타이틀 (정상:0, 비정상:1) 만 입력
+                            summary_file.write("0 ")
                             if len(state_zero) > 1:
-                                for i in range(len(state_zero)):
-                                    f.write(state_zero[i])
-                            elif len(state_one) > 1:
-                                for z in range(len(state_one)):
-                                    f.write(state_one[z])
+                                for state_zero_count in range(len(state_zero)):
+                                    summary_file.write(state_zero[state_zero_count])
+                            else:
+                                summary_file.write(" ")
+
+                            summary_file.write("1 ")
+                            if len(state_one) > 1:
+                                for state_one_count in range(len(state_one)):
+                                    summary_file.write(state_one[state_one_count])
+                            else:
+                                summary_file.write(" ")
 
 
         # Summary 파일 내 결과 입력
-        with open(str(save_summary_dir) + "/" + 'test_summary.txt', 'a') as sum_f:
+        with open(os.path.join(str(save_summary_dir), 'test_summary.txt'), 'a') as sum_f:
             sum_f.write(s + "\n")
 
     # 최종 결과 print
