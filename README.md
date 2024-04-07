@@ -1,3 +1,7 @@
+<details>
+<summary>Change log</summary>
+<div>
+
 > change log (2022.08.24)
 > - fix typo in the readme
 
@@ -8,6 +12,9 @@
 > change log (2024.01.18)
 > - code modify(detect.py)
 > - add config.json file
+</div>
+</details>
+
 ---
 
 # 도로시설물 이상 탐지 여부
